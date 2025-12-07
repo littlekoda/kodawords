@@ -132,6 +132,17 @@
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             border-radius: 15px;
             width: 100%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .question-word:hover {
+            transform: scale(1.02);
+        }
+
+        .question-word.speakable::after {
+            content: ' 🔊';
+            font-size: 24px;
         }
 
         .answer-btn {
@@ -369,7 +380,7 @@
             <div class="score-display">
                 Score: <span id="score">0</span> / <span id="total">0</span>
             </div>
-            <div class="question-word" id="question-word"></div>
+            <div class="question-word" id="question-word" onclick="speakQuestionWord()"></div>
             <div id="answers-container">
                 <button class="answer-btn" onclick="checkAnswer(0)"></button>
                 <button class="answer-btn" onclick="checkAnswer(1)"></button>
@@ -526,6 +537,27 @@
         let currentCardIndex = 0;
         let isAnswered = false;
 
+        // Speech synthesis function
+        function speakWord(text) {
+            if ('speechSynthesis' in window) {
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Speak current question word (for clicking on question in quiz mode)
+        function speakQuestionWord() {
+            if (currentMode === 'eng-chi' && shuffledWords[currentQuestionIndex]) {
+                speakWord(shuffledWords[currentQuestionIndex].english);
+            }
+        }
+
         // Utility functions
         function shuffleArray(array) {
             const shuffled = [...array];
@@ -575,6 +607,15 @@
             const questionWord = currentMode === 'eng-chi' ? currentWord.english : currentWord.chinese;
             document.getElementById('question-word').textContent = questionWord;
 
+            // Add speakable class and speak the word if it's English (Mode A: English → Chinese)
+            const questionWordEl = document.getElementById('question-word');
+            if (currentMode === 'eng-chi') {
+                questionWordEl.classList.add('speakable');
+                speakWord(currentWord.english);
+            } else {
+                questionWordEl.classList.remove('speakable');
+            }
+
             // Generate answer choices
             const correctAnswer = currentMode === 'eng-chi' ? currentWord.chinese : currentWord.english;
 
@@ -606,6 +647,11 @@
 
             const buttons = document.querySelectorAll('.answer-btn');
             buttons.forEach(btn => btn.disabled = true);
+
+            // Speak the selected answer if it's English (Mode B: Chinese → English)
+            if (currentMode === 'chi-eng') {
+                speakWord(currentAnswers[selectedIndex]);
+            }
 
             if (selectedIndex === correctAnswerIndex) {
                 score++;
@@ -673,7 +719,15 @@
         }
 
         function flipCard() {
-            document.getElementById('flashcard').classList.toggle('flipped');
+            const flashcard = document.getElementById('flashcard');
+            const isCurrentlyFlipped = flashcard.classList.contains('flipped');
+
+            // Speak the English word when clicking (before flipping to Chinese)
+            if (!isCurrentlyFlipped) {
+                speakWord(shuffledWords[currentCardIndex].english);
+            }
+
+            flashcard.classList.toggle('flipped');
         }
 
         function nextCard() {

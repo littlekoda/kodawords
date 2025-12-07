@@ -31,15 +31,17 @@ REQUIREMENTS:
 
 2. GAMEPLAY (QUIZ MODES A & B)  
    - Show ONE word at a time (English or Chinese depending on mode).  
+   - Speak out the word when It is English
    - Provide 4 answer choices (multiple choice).  
    - Only ONE is correct; others must be randomly selected distractors.  
    - Give instant feedback (“Correct! 🎉” or “Wrong ❌”).  
+   - Select a word as answer, when it is English, speak it out
    - After answering, automatically load the next word.  
    - Track score and total questions.  
    - After 20 questions, show “Final Score” screen.
 
 3. FLASHCARD MODE (Mode C)  
-   - Show English on front.  
+   - Show English on front.  When click/touch the English word, speak it out
    - Tap/click to flip to Chinese translation.  
    - Show “Next” and “Previous” buttons.  
    - Loop through all 100 terms.
@@ -64,5 +66,6 @@ REQUIREMENTS:
      2) Hard mode (shorter answer time)  
      3) Audio pronunciation  
      4) Score saving using localStorage  
+
 
 Before creating the file, explain your planned structure and ask for confirmation.
