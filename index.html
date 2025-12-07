@@ -536,6 +536,27 @@
         let shuffledWords = [];
         let currentCardIndex = 0;
         let isAnswered = false;
+        let speechEnabled = false;
+        let pendingSpeech = null;
+
+        // Initialize speech synthesis after user interaction
+        function initSpeech() {
+            if (!speechEnabled && 'speechSynthesis' in window) {
+                // Unlock audio context with a silent utterance
+                const unlock = new SpeechSynthesisUtterance('');
+                unlock.volume = 0;
+                window.speechSynthesis.speak(unlock);
+                speechEnabled = true;
+
+                // Speak any pending word
+                if (pendingSpeech) {
+                    setTimeout(() => {
+                        speakWord(pendingSpeech);
+                        pendingSpeech = null;
+                    }, 100);
+                }
+            }
+        }
 
         // Speech synthesis function
         function speakWord(text) {
@@ -543,12 +564,33 @@
                 // Cancel any ongoing speech
                 window.speechSynthesis.cancel();
 
+                // If speech not yet enabled, queue it
+                if (!speechEnabled) {
+                    pendingSpeech = text;
+                    return;
+                }
+
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'en-US';
                 utterance.rate = 0.9;
                 utterance.pitch = 1;
+
+                // Fix for some browsers where voices aren't loaded yet
+                const voices = window.speechSynthesis.getVoices();
+                const englishVoice = voices.find(v => v.lang.startsWith('en'));
+                if (englishVoice) {
+                    utterance.voice = englishVoice;
+                }
+
                 window.speechSynthesis.speak(utterance);
             }
+        }
+
+        // Preload voices when available
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = function() {
+                window.speechSynthesis.getVoices();
+            };
         }
 
         // Speak current question word (for clicking on question in quiz mode)
@@ -577,6 +619,9 @@
 
         // Quiz functions
         function startQuiz(mode) {
+            // Initialize speech on user interaction (button click)
+            initSpeech();
+
             currentMode = mode;
             currentQuestionIndex = 0;
             score = 0;
@@ -587,7 +632,11 @@
             document.getElementById('feedback').textContent = '';
 
             showScreen('quiz-screen');
-            loadQuestion();
+
+            // Small delay to ensure speech is initialized before first word
+            setTimeout(() => {
+                loadQuestion();
+            }, 150);
         }
 
         function loadQuestion() {
@@ -701,6 +750,9 @@
 
         // Flashcard functions
         function startFlashcards() {
+            // Initialize speech on user interaction (button click)
+            initSpeech();
+
             shuffledWords = shuffleArray(medicalWords);
             currentCardIndex = 0;
             document.getElementById('card-total').textContent = medicalWords.length;
