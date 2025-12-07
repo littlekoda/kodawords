@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Quest – 中英单词练习游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #app {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            min-height: 600px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 22px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            width: 100%;
+            padding: 20px;
+            margin: 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .mode-btn:active {
+            transform: translateY(0);
+        }
+
+        .mode-btn.eng-chi {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .mode-btn.chi-eng {
+            background: linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%);
+            color: white;
+        }
+
+        .mode-btn.flashcard {
+            background: linear-gradient(135deg, #5f2c82 0%, #49a09d 100%);
+            color: white;
+        }
+
+        /* Quiz Screen Styles */
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #11998e, #38ef7d);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .score-display {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .question-word {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+            margin: 30px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            width: 100%;
+        }
+
+        .answer-btn {
+            width: 100%;
+            padding: 18px;
+            margin: 8px 0;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .answer-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .answer-btn.correct {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .answer-btn.wrong {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .answer-btn:disabled {
+            cursor: not-allowed;
+        }
+
+        .feedback {
+            font-size: 24px;
+            margin: 20px 0;
+            min-height: 40px;
+        }
+
+        /* Flashcard Styles */
+        .flashcard-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 250px;
+            margin: 30px 0;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front,
+        .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: bold;
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .flashcard-front {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .flashcard-back {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-nav {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .nav-btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-btn.prev {
+            background: #6c757d;
+            color: white;
+        }
+
+        .nav-btn.next {
+            background: #007bff;
+            color: white;
+        }
+
+        .nav-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .card-counter {
+            font-size: 18px;
+            color: #666;
+            margin-top: 15px;
+        }
+
+        .tap-hint {
+            font-size: 14px;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        /* Results Screen */
+        .result-score {
+            font-size: 72px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .result-text {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .result-message {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .restart-btn {
+            padding: 18px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .home-btn {
+            margin-top: 15px;
+            padding: 12px 30px;
+            font-size: 16px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .home-btn:hover {
+            background: #5a6268;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            #app {
+                padding: 20px;
+                min-height: auto;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .question-word {
+                font-size: 28px;
+            }
+
+            .flashcard-front,
+            .flashcard-back {
+                font-size: 26px;
+            }
+
+            .result-score {
+                font-size: 56px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <h1>Vocabulary Quest</h1>
+            <p class="subtitle">中英医学单词练习游戏</p>
+            <h2>选择游戏模式</h2>
+            <button class="mode-btn eng-chi" onclick="startQuiz('eng-chi')">
+                Mode A: English → 中文
+            </button>
+            <button class="mode-btn chi-eng" onclick="startQuiz('chi-eng')">
+                Mode B: 中文 → English
+            </button>
+            <button class="mode-btn flashcard" onclick="startFlashcards()">
+                Mode C: Flashcards 单词卡片
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="score-display">
+                Score: <span id="score">0</span> / <span id="total">0</span>
+            </div>
+            <div class="question-word" id="question-word"></div>
+            <div id="answers-container">
+                <button class="answer-btn" onclick="checkAnswer(0)"></button>
+                <button class="answer-btn" onclick="checkAnswer(1)"></button>
+                <button class="answer-btn" onclick="checkAnswer(2)"></button>
+                <button class="answer-btn" onclick="checkAnswer(3)"></button>
+            </div>
+            <div class="feedback" id="feedback"></div>
+        </div>
+
+        <!-- Flashcard Screen -->
+        <div id="flashcard-screen" class="screen">
+            <h2>Flashcards 单词卡片</h2>
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard" onclick="flipCard()">
+                    <div class="flashcard-front" id="card-front"></div>
+                    <div class="flashcard-back" id="card-back"></div>
+                </div>
+            </div>
+            <p class="tap-hint">点击卡片翻转 / Tap to flip</p>
+            <div class="card-counter">
+                <span id="card-index">1</span> / <span id="card-total">100</span>
+            </div>
+            <div class="flashcard-nav">
+                <button class="nav-btn prev" onclick="prevCard()">← Previous</button>
+                <button class="nav-btn next" onclick="nextCard()">Next →</button>
+            </div>
+            <button class="home-btn" onclick="goHome()">返回主页</button>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="screen">
+            <h2>Game Over!</h2>
+            <div class="result-score" id="final-score">0</div>
+            <div class="result-text">out of 20 questions</div>
+            <div class="result-message" id="result-message"></div>
+            <button class="restart-btn" onclick="restartQuiz()">Play Again</button>
+            <button class="home-btn" onclick="goHome()">返回主页</button>
+        </div>
+    </div>
+
+    <script>
+        // Medical vocabulary data - 100 terms
+        const medicalWords = [
+            { english: "hypertension", chinese: "高血压" },
+            { english: "diabetes", chinese: "糖尿病" },
+            { english: "pneumonia", chinese: "肺炎" },
+            { english: "bronchitis", chinese: "支气管炎" },
+            { english: "arthritis", chinese: "关节炎" },
+            { english: "anemia", chinese: "贫血" },
+            { english: "asthma", chinese: "哮喘" },
+            { english: "migraine", chinese: "偏头痛" },
+            { english: "insomnia", chinese: "失眠" },
+            { english: "obesity", chinese: "肥胖症" },
+            { english: "fracture", chinese: "骨折" },
+            { english: "infection", chinese: "感染" },
+            { english: "inflammation", chinese: "炎症" },
+            { english: "tumor", chinese: "肿瘤" },
+            { english: "cancer", chinese: "癌症" },
+            { english: "leukemia", chinese: "白血病" },
+            { english: "hepatitis", chinese: "肝炎" },
+            { english: "gastritis", chinese: "胃炎" },
+            { english: "appendicitis", chinese: "阑尾炎" },
+            { english: "tonsillitis", chinese: "扁桃体炎" },
+            { english: "meningitis", chinese: "脑膜炎" },
+            { english: "dermatitis", chinese: "皮炎" },
+            { english: "conjunctivitis", chinese: "结膜炎" },
+            { english: "otitis", chinese: "耳炎" },
+            { english: "sinusitis", chinese: "鼻窦炎" },
+            { english: "pharyngitis", chinese: "咽炎" },
+            { english: "laryngitis", chinese: "喉炎" },
+            { english: "nephritis", chinese: "肾炎" },
+            { english: "cystitis", chinese: "膀胱炎" },
+            { english: "prostatitis", chinese: "前列腺炎" },
+            { english: "endometritis", chinese: "子宫内膜炎" },
+            { english: "mastitis", chinese: "乳腺炎" },
+            { english: "pancreatitis", chinese: "胰腺炎" },
+            { english: "cholecystitis", chinese: "胆囊炎" },
+            { english: "peritonitis", chinese: "腹膜炎" },
+            { english: "myocarditis", chinese: "心肌炎" },
+            { english: "pericarditis", chinese: "心包炎" },
+            { english: "endocarditis", chinese: "心内膜炎" },
+            { english: "thrombosis", chinese: "血栓形成" },
+            { english: "embolism", chinese: "栓塞" },
+            { english: "hemorrhage", chinese: "出血" },
+            { english: "edema", chinese: "水肿" },
+            { english: "necrosis", chinese: "坏死" },
+            { english: "fibrosis", chinese: "纤维化" },
+            { english: "cirrhosis", chinese: "肝硬化" },
+            { english: "atherosclerosis", chinese: "动脉粥样硬化" },
+            { english: "osteoporosis", chinese: "骨质疏松症" },
+            { english: "scoliosis", chinese: "脊柱侧弯" },
+            { english: "epilepsy", chinese: "癫痫" },
+            { english: "paralysis", chinese: "瘫痪" },
+            { english: "stroke", chinese: "中风" },
+            { english: "concussion", chinese: "脑震荡" },
+            { english: "hernia", chinese: "疝气" },
+            { english: "ulcer", chinese: "溃疡" },
+            { english: "abscess", chinese: "脓肿" },
+            { english: "cyst", chinese: "囊肿" },
+            { english: "polyp", chinese: "息肉" },
+            { english: "nodule", chinese: "结节" },
+            { english: "lesion", chinese: "病变" },
+            { english: "symptom", chinese: "症状" },
+            { english: "diagnosis", chinese: "诊断" },
+            { english: "prognosis", chinese: "预后" },
+            { english: "therapy", chinese: "治疗" },
+            { english: "surgery", chinese: "手术" },
+            { english: "biopsy", chinese: "活检" },
+            { english: "autopsy", chinese: "尸检" },
+            { english: "prescription", chinese: "处方" },
+            { english: "dosage", chinese: "剂量" },
+            { english: "injection", chinese: "注射" },
+            { english: "infusion", chinese: "输液" },
+            { english: "transfusion", chinese: "输血" },
+            { english: "anesthesia", chinese: "麻醉" },
+            { english: "antibiotic", chinese: "抗生素" },
+            { english: "vaccine", chinese: "疫苗" },
+            { english: "immunity", chinese: "免疫力" },
+            { english: "allergy", chinese: "过敏" },
+            { english: "metabolism", chinese: "新陈代谢" },
+            { english: "hormone", chinese: "激素" },
+            { english: "enzyme", chinese: "酶" },
+            { english: "protein", chinese: "蛋白质" },
+            { english: "carbohydrate", chinese: "碳水化合物" },
+            { english: "cholesterol", chinese: "胆固醇" },
+            { english: "glucose", chinese: "葡萄糖" },
+            { english: "hemoglobin", chinese: "血红蛋白" },
+            { english: "platelet", chinese: "血小板" },
+            { english: "leukocyte", chinese: "白细胞" },
+            { english: "erythrocyte", chinese: "红细胞" },
+            { english: "artery", chinese: "动脉" },
+            { english: "vein", chinese: "静脉" },
+            { english: "capillary", chinese: "毛细血管" },
+            { english: "nerve", chinese: "神经" },
+            { english: "muscle", chinese: "肌肉" },
+            { english: "tendon", chinese: "肌腱" },
+            { english: "ligament", chinese: "韧带" },
+            { english: "cartilage", chinese: "软骨" },
+            { english: "bone marrow", chinese: "骨髓" },
+            { english: "spleen", chinese: "脾脏" },
+            { english: "thyroid", chinese: "甲状腺" },
+            { english: "adrenal gland", chinese: "肾上腺" },
+            { english: "pituitary gland", chinese: "垂体" }
+        ];
+
+        // Game state
+        let currentMode = '';
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let totalQuestions = 20;
+        let currentAnswers = [];
+        let correctAnswerIndex = 0;
+        let shuffledWords = [];
+        let currentCardIndex = 0;
+        let isAnswered = false;
+
+        // Utility functions
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Quiz functions
+        function startQuiz(mode) {
+            currentMode = mode;
+            currentQuestionIndex = 0;
+            score = 0;
+            shuffledWords = shuffleArray(medicalWords).slice(0, totalQuestions);
+
+            document.getElementById('score').textContent = '0';
+            document.getElementById('total').textContent = '0';
+            document.getElementById('feedback').textContent = '';
+
+            showScreen('quiz-screen');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= totalQuestions) {
+                showResults();
+                return;
+            }
+
+            isAnswered = false;
+            const currentWord = shuffledWords[currentQuestionIndex];
+
+            // Update progress
+            const progress = ((currentQuestionIndex) / totalQuestions) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+
+            // Set question word
+            const questionWord = currentMode === 'eng-chi' ? currentWord.english : currentWord.chinese;
+            document.getElementById('question-word').textContent = questionWord;
+
+            // Generate answer choices
+            const correctAnswer = currentMode === 'eng-chi' ? currentWord.chinese : currentWord.english;
+
+            // Get 3 random wrong answers
+            let wrongAnswers = medicalWords
+                .filter(w => w !== currentWord)
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 3)
+                .map(w => currentMode === 'eng-chi' ? w.chinese : w.english);
+
+            // Combine and shuffle answers
+            currentAnswers = shuffleArray([correctAnswer, ...wrongAnswers]);
+            correctAnswerIndex = currentAnswers.indexOf(correctAnswer);
+
+            // Update answer buttons
+            const buttons = document.querySelectorAll('.answer-btn');
+            buttons.forEach((btn, index) => {
+                btn.textContent = currentAnswers[index];
+                btn.className = 'answer-btn';
+                btn.disabled = false;
+            });
+
+            document.getElementById('feedback').textContent = '';
+        }
+
+        function checkAnswer(selectedIndex) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const buttons = document.querySelectorAll('.answer-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === correctAnswerIndex) {
+                score++;
+                document.getElementById('score').textContent = score;
+                buttons[selectedIndex].classList.add('correct');
+                document.getElementById('feedback').textContent = 'Correct! 🎉';
+            } else {
+                buttons[selectedIndex].classList.add('wrong');
+                buttons[correctAnswerIndex].classList.add('correct');
+                document.getElementById('feedback').textContent = 'Wrong ❌';
+            }
+
+            document.getElementById('total').textContent = currentQuestionIndex + 1;
+
+            // Load next question after delay
+            setTimeout(() => {
+                currentQuestionIndex++;
+                loadQuestion();
+            }, 1500);
+        }
+
+        function showResults() {
+            document.getElementById('final-score').textContent = score;
+
+            let message = '';
+            const percentage = (score / totalQuestions) * 100;
+
+            if (percentage === 100) {
+                message = '🏆 Perfect! 太棒了！You are a vocabulary master!';
+            } else if (percentage >= 80) {
+                message = '🌟 Excellent! 非常好！Keep up the great work!';
+            } else if (percentage >= 60) {
+                message = '👍 Good job! 不错！Keep practicing!';
+            } else if (percentage >= 40) {
+                message = '💪 Keep trying! 继续努力！You can do better!';
+            } else {
+                message = '📚 Time to study! 加油学习！Practice makes perfect!';
+            }
+
+            document.getElementById('result-message').textContent = message;
+            showScreen('results-screen');
+        }
+
+        function restartQuiz() {
+            startQuiz(currentMode);
+        }
+
+        // Flashcard functions
+        function startFlashcards() {
+            shuffledWords = shuffleArray(medicalWords);
+            currentCardIndex = 0;
+            document.getElementById('card-total').textContent = medicalWords.length;
+            showScreen('flashcard-screen');
+            updateFlashcard();
+        }
+
+        function updateFlashcard() {
+            const card = shuffledWords[currentCardIndex];
+            document.getElementById('card-front').textContent = card.english;
+            document.getElementById('card-back').textContent = card.chinese;
+            document.getElementById('card-index').textContent = currentCardIndex + 1;
+
+            // Reset flip state
+            document.getElementById('flashcard').classList.remove('flipped');
+        }
+
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        function nextCard() {
+            currentCardIndex = (currentCardIndex + 1) % shuffledWords.length;
+            updateFlashcard();
+        }
+
+        function prevCard() {
+            currentCardIndex = (currentCardIndex - 1 + shuffledWords.length) % shuffledWords.length;
+            updateFlashcard();
+        }
+
+        function goHome() {
+            showScreen('start-screen');
+        }
+    </script>
+</body>
+</html>
