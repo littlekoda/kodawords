@@ -1,71 +1,114 @@
-I want to build a browser-based educational game to help Chinese medical students learn and remember medical English vocabulary.  
-Please generate a complete `index.html` file using plain HTML + CSS + JavaScript (no frameworks).
+I want to build a browser-based educational game to help Chinese medical students learn and remember medical English vocabulary.
 
-GAME NAME:  
+Please generate a complete `index.html` file using plain HTML + CSS + JavaScript (NO frameworks).
+
+===========================================================
+GAME NAME:
 "Vocabulary Quest – 中英单词练习游戏"
+===========================================================
 
-GOAL OF GAME:  
-Students practice matching 100 English medical terms with their correct Chinese translations.  
-The game must support:  
-- English → Chinese mode  
-- Chinese → English mode  
-- Randomized questions  
-- Scoring  
-- A timer option  
-- Review mode
+The game must contain FOUR modes:
 
-DATA:  
-You may generate a sample list of 100 medical terms in a JavaScript array named `medicalWords`, each item structured like:
-{
-  english: "hypertension",
-  chinese: "高血压"
-}
+-----------------------------------------------------------
+MODE A: English → Chinese Multiple Choice Quiz
+-----------------------------------------------------------
+• Show one English medical term.
+• Speak out the English word using Web Speech API.
+• Provide 4 answer choices (Chinese).
+• Only one is correct; 3 must be random distractors.
+• Give instant “Correct! 🎉” or “Wrong ❌”.
+• After answering, automatically load the next question.
+• Track score and total questions.
+• After 20 questions → show Final Score page.
 
-REQUIREMENTS:
+-----------------------------------------------------------
+MODE B: Chinese → English Multiple Choice Quiz
+-----------------------------------------------------------
+• Show one Chinese medical term.
+• Provide 4 possible English translations.
+• Speak out the chosen English answer.
+• Same scoring and final screen as Mode A.
 
-1. GAME MODES  
-   - Mode A: “English → Chinese”  
-   - Mode B: “Chinese → English”  
-   - Mode C: “Flashcards Review Mode”  
-   On the start screen, show 3 mode buttons.
+-----------------------------------------------------------
+MODE C: Flashcard Review Mode
+-----------------------------------------------------------
+• Show English on front.
+• When English is shown, speak it out.
+• Tap/click flips card to Chinese.
+• Buttons: “Next”, “Previous”.
+• Loop through all 100 terms.
 
-2. GAMEPLAY (QUIZ MODES A & B)  
-   - Show ONE word at a time (English or Chinese depending on mode).  
-   - Speak out the word when It is English
-   - Provide 4 answer choices (multiple choice).  
-   - Only ONE is correct; others must be randomly selected distractors.  
-   - Give instant feedback (“Correct! 🎉” or “Wrong ❌”).  
-   - Select a word as answer, when it is English, speak it out
-   - After answering, automatically load the next word.  
-   - Track score and total questions.  
-   - After 20 questions, show “Final Score” screen.
+-----------------------------------------------------------
+MODE D: Paragraph Fill-in Game (NEW – integrate previous prompt)
+-----------------------------------------------------------
+Goal:
+Students read a short paragraph where 3 vocabulary words are removed and replaced with blanks. They must fill the blanks in the correct order.
 
-3. FLASHCARD MODE (Mode C)  
-   - Show English on front.  When click/touch the English word, speak it out
-   - Tap/click to flip to Chinese translation.  
-   - Show “Next” and “Previous” buttons.  
-   - Loop through all 100 terms.
+Mechanics:
+1. From the 100-word vocabulary list:
+   - Randomly select 3 distinct English words.
+   - Generate a short natural paragraph (2–3 sentences) that includes these 3 English words.
+2. Replace each selected word with a blank placeholder “____”.
+3. Display the paragraph with blanks.
+4. Below the paragraph, show 3 word buttons in random order.
+5. Cursor automatically highlights the FIRST blank.
+6. User clicks a word:
+   - If correct → fill the blank, move focus to next blank.
+   - If wrong → shake animation or red highlight; stay on current blank.
+7. After all blanks are correctly filled:
+   - Show a message “Correct! Generating next paragraph…”
+   - Automatically start a new round (new 3 words + new paragraph).
+8 - The format of this section is correct, and I intended to fill in the blanks this way. However, the problem is that this paragraph lacks a medical background; the sentences within it are not logically related from a medical perspective. I hope that after filling in the correct words, this paragraph will make sense medically.
 
-4. UI REQUIREMENTS  
-   - Bright, friendly colors.  
-   - Large font for readability.  
-   - Mobile-friendly responsive layout.  
-   - Centered game container for consistent layout.
+Additional UI rules:
+• Large readable blanks.
+• Mobile-friendly.
+• Highlight active blank.
+• Shuffle answer words every round.
+• Avoid repeating the same paragraph too often.
 
-5. CODE STRUCTURE  
-   - The ENTIRE game must be inside one file: `index.html`  
-   - Include:  
-     - `<style>` block for CSS  
-     - `<script>` block for JavaScript  
-     - `<div id="app">` main container  
-   - Code must be clean and beginner-friendly.
+-----------------------------------------------------------
+DATA (shared by all 4 games)
+-----------------------------------------------------------
+Generate a sample list of 100 medical terms:
 
-6. AFTER GENERATING THE FILE  
-   - Ask me if I want:  
-     1) More words added  
-     2) Hard mode (shorter answer time)  
-     3) Audio pronunciation  
-     4) Score saving using localStorage  
+medicalWords = [
+  { english: "hypertension", chinese: "高血压" },
+  { english: "fracture", chinese: "骨折" },
+  ...
+];
 
+-----------------------------------------------------------
+UI REQUIREMENTS
+-----------------------------------------------------------
+• Start screen shows 4 big mode buttons:
+    A: 英 → 中
+    B: 中 → 英
+    C: Flashcards
+    D: Paragraph Fill
+• Bright, friendly colors.
+• Large readable text, mobile-friendly.
+• All screens rendered inside:
+      <div id="app"></div>
+• Clean, organized layout.
 
-Before creating the file, explain your planned structure and ask for confirmation.
+-----------------------------------------------------------
+TECHNICAL REQUIREMENTS
+-----------------------------------------------------------
+• Entire game MUST be inside ONE file: index.html
+• Use:
+    <style> for CSS
+    <script> for JavaScript
+• Use Web Speech API for English audio.
+• No external libraries.
+• Code must be clear, modular, and well-commented.
+• Allow easy future expansion.
+
+-----------------------------------------------------------
+AFTER GENERATING THE FILE
+-----------------------------------------------------------
+Ask me if I want:
+1) More vocabulary words
+2) Hard mode (shorter answer time)
+3) Better paragraph generation
+4) Saving progress using localStorage

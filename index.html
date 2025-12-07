@@ -100,6 +100,11 @@
             color: white;
         }
 
+        .mode-btn.paragraph {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+            color: white;
+        }
+
         /* Quiz Screen Styles */
         .progress-bar {
             width: 100%;
@@ -328,6 +333,125 @@
             background: #5a6268;
         }
 
+        /* Paragraph Fill Game Styles */
+        .paragraph-container {
+            width: 100%;
+            text-align: left;
+            margin: 20px 0;
+        }
+
+        .paragraph-text {
+            font-size: 18px;
+            line-height: 2;
+            color: #333;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 120px;
+            padding: 5px 15px;
+            margin: 0 5px;
+            border-bottom: 3px solid #667eea;
+            background: #e8ecff;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            color: #667eea;
+            transition: all 0.3s;
+        }
+
+        .blank.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+            animation: pulse 1.5s infinite;
+        }
+
+        .blank.filled {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .blank.wrong {
+            animation: shake 0.5s;
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(102, 126, 234, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.8); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        .word-choices {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .word-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            background: white;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .word-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .word-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .word-btn.used {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .paragraph-feedback {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .paragraph-feedback.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .paragraph-score {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
         /* Responsive */
         @media (max-width: 480px) {
             #app {
@@ -369,6 +493,9 @@
             </button>
             <button class="mode-btn flashcard" onclick="startFlashcards()">
                 Mode C: Flashcards 单词卡片
+            </button>
+            <button class="mode-btn paragraph" onclick="startParagraph()">
+                Mode D: Paragraph Fill 段落填空
             </button>
         </div>
 
@@ -417,6 +544,20 @@
             <div class="result-text">out of 20 questions</div>
             <div class="result-message" id="result-message"></div>
             <button class="restart-btn" onclick="restartQuiz()">Play Again</button>
+            <button class="home-btn" onclick="goHome()">返回主页</button>
+        </div>
+
+        <!-- Paragraph Fill Screen -->
+        <div id="paragraph-screen" class="screen">
+            <h2>Paragraph Fill 段落填空</h2>
+            <div class="paragraph-score">
+                Completed: <span id="para-score">0</span> paragraphs
+            </div>
+            <div class="paragraph-container">
+                <div class="paragraph-text" id="paragraph-text"></div>
+            </div>
+            <div class="word-choices" id="word-choices"></div>
+            <div class="paragraph-feedback" id="para-feedback"></div>
             <button class="home-btn" onclick="goHome()">返回主页</button>
         </div>
     </div>
@@ -794,6 +935,258 @@
 
         function goHome() {
             showScreen('start-screen');
+        }
+
+        // ============================================
+        // Paragraph Fill Game (Mode D)
+        // ============================================
+
+        // Medically coherent scenarios - each has a paragraph template with 3 specific related words
+        // Words are chosen to make logical medical sense together
+        const medicalScenarios = [
+            {
+                template: "A 55-year-old patient with uncontrolled {0} developed {1} in the left ventricle. The cardiologist ordered an {2} to evaluate cardiac function and wall motion abnormalities.",
+                words: ["hypertension", "thrombosis", "electrocardiogram"]
+            },
+            {
+                template: "The patient was admitted with severe {0} causing difficulty breathing. Chest X-ray revealed bilateral infiltrates consistent with {1}. The physician prescribed an {2} to treat the bacterial infection.",
+                words: ["pneumonia", "inflammation", "antibiotic"]
+            },
+            {
+                template: "Long-term {0} can damage blood vessels and lead to {1}. Regular monitoring of {2} levels is essential to prevent complications.",
+                words: ["diabetes", "atherosclerosis", "glucose"]
+            },
+            {
+                template: "The patient presented with joint pain and morning stiffness, suggesting {0}. Blood tests showed elevated markers of {1}. The rheumatologist started treatment to modulate the {2} response.",
+                words: ["arthritis", "inflammation", "immune system"]
+            },
+            {
+                template: "Chronic {0} resulted in scarring and development of {1}. The gastroenterologist recommended monitoring for signs of {2} in the esophagus.",
+                words: ["hepatitis", "cirrhosis", "hemorrhage"]
+            },
+            {
+                template: "The oncologist diagnosed the patient with {0} after bone marrow biopsy. Low {1} count put the patient at risk for {2}.",
+                words: ["leukemia", "platelet", "hemorrhage"]
+            },
+            {
+                template: "Untreated {0} can lead to kidney damage and {1}. The nephrologist recommended strict control of {2} to protect renal function.",
+                words: ["hypertension", "nephritis", "blood pressure"]
+            },
+            {
+                template: "The patient underwent {0} for tumor removal. Post-operative care included pain management with {1} and monitoring for signs of {2}.",
+                words: ["surgery", "anesthesia", "infection"]
+            },
+            {
+                template: "Severe {0} can trigger an asthma attack causing bronchospasm. The pulmonologist prescribed medication to reduce airway {1} and improve {2} function.",
+                words: ["allergy", "inflammation", "respiratory"]
+            },
+            {
+                template: "The patient's {0} showed abnormal rhythms indicating {1}. The cardiologist explained the {2} system was affected and recommended further evaluation.",
+                words: ["electrocardiogram", "arrhythmia", "cardiovascular"]
+            },
+            {
+                template: "Blood tests revealed low {0} levels causing {1}. The hematologist recommended iron supplementation to increase {2} production.",
+                words: ["hemoglobin", "anemia", "erythrocyte"]
+            },
+            {
+                template: "The elderly patient suffered a {0} after a fall, requiring surgical fixation. Bone density scan revealed severe {1}, increasing risk of future {2}.",
+                words: ["fracture", "osteoporosis", "trauma"]
+            },
+            {
+                template: "The patient developed a severe {0} reaction after taking the new medication. {1} was administered to treat the systemic response. The physician noted this in the patient's {2} history.",
+                words: ["allergy", "injection", "immune system"]
+            },
+            {
+                template: "Chronic {0} of the stomach lining led to development of an {1}. The gastroenterologist performed a {2} to examine the tissue.",
+                words: ["gastritis", "ulcer", "biopsy"]
+            },
+            {
+                template: "The patient with {0} required regular {1} to manage blood sugar levels. Poor metabolic control can affect {2} throughout the body.",
+                words: ["diabetes", "insulin", "metabolism"]
+            },
+            {
+                template: "The neurologist diagnosed {0} after the patient experienced recurrent seizures. An EEG showed abnormal electrical activity in the {1}. Medication was prescribed to stabilize the {2}.",
+                words: ["epilepsy", "nerve", "nervous system"]
+            },
+            {
+                template: "High {0} levels contributed to {1} of the coronary arteries. The cardiologist recommended lifestyle changes to improve {2} health.",
+                words: ["cholesterol", "atherosclerosis", "cardiovascular"]
+            },
+            {
+                template: "The patient received a {0} to prevent influenza infection. Vaccines work by stimulating the body's {1} to build protection. This enhances overall {2}.",
+                words: ["vaccine", "immune system", "immunity"]
+            },
+            {
+                template: "Abdominal imaging revealed a {0} on the liver requiring further investigation. The surgeon performed a {1} to determine if the growth was {2} or benign.",
+                words: ["tumor", "biopsy", "malignant"]
+            },
+            {
+                template: "The patient was diagnosed with {0} of the thyroid gland, causing weight gain and fatigue. Blood tests showed abnormal {1} levels affecting overall {2}.",
+                words: ["hypothyroidism", "hormone", "metabolism"]
+            },
+            {
+                template: "Inflammation of the {0} caused swelling in the legs. The vascular surgeon found a {1} blocking blood flow in the {2}.",
+                words: ["vein", "thrombosis", "circulatory"]
+            },
+            {
+                template: "The orthopedic surgeon repaired the torn {0} in the patient's knee. Post-surgery rehabilitation focused on strengthening the surrounding {1} and {2}.",
+                words: ["ligament", "muscle", "cartilage"]
+            },
+            {
+                template: "The patient presented with severe headache and neck stiffness, raising concern for {0}. A lumbar puncture confirmed {1} in the cerebrospinal fluid. Immediate {2} therapy was started.",
+                words: ["meningitis", "infection", "antibiotic"]
+            },
+            {
+                template: "Chronic kidney disease can cause {0} due to reduced production of erythropoietin. The nephrologist monitored {1} counts and treated the underlying {2}.",
+                words: ["anemia", "erythrocyte", "nephritis"]
+            },
+            {
+                template: "The patient's {0} revealed a suspicious mass in the abdomen. {1} imaging provided detailed pictures for the {2} to evaluate.",
+                words: ["ultrasound", "MRI", "radiology"]
+            },
+            {
+                template: "The pediatrician treated the child's ear {0} with appropriate medication. Recurring infections can lead to {1} of the middle ear and hearing problems. Parents were advised about {2} measures.",
+                words: ["infection", "inflammation", "immunity"]
+            },
+            {
+                template: "The patient with {0} disease experienced episodes of severe abdominal pain. Imaging showed {1} of the intestinal wall. A {2} was performed to assess tissue damage.",
+                words: ["inflammatory", "inflammation", "biopsy"]
+            },
+            {
+                template: "After the motor vehicle accident, the patient suffered a {0} and was monitored for neurological changes. CT scan ruled out {1}. The {2} team provided comprehensive care.",
+                words: ["concussion", "hemorrhage", "neurology"]
+            },
+            {
+                template: "The endocrinologist adjusted the patient's {0} dosage based on blood sugar readings. Proper {1} management is crucial in {2} care.",
+                words: ["insulin", "dosage", "diabetes"]
+            },
+            {
+                template: "The dermatologist identified {0} on the patient's skin caused by an autoimmune reaction. Topical treatment reduced the {1}. The condition is classified as {2}.",
+                words: ["dermatitis", "inflammation", "autoimmune"]
+            }
+        ];
+
+        // Paragraph game state
+        let paragraphScore = 0;
+        let currentBlanks = [];  // Array of {word, filled}
+        let currentBlankIndex = 0;
+        let selectedWords = [];
+        let usedScenarioIndices = [];  // Track used scenarios to avoid repetition
+
+        function startParagraph() {
+            // Initialize speech on user interaction
+            initSpeech();
+
+            paragraphScore = 0;
+            usedScenarioIndices = [];
+            document.getElementById('para-score').textContent = '0';
+            document.getElementById('para-feedback').textContent = '';
+            document.getElementById('para-feedback').className = 'paragraph-feedback';
+
+            showScreen('paragraph-screen');
+            loadNewParagraph();
+        }
+
+        function loadNewParagraph() {
+            // Reset state
+            currentBlankIndex = 0;
+            document.getElementById('para-feedback').textContent = '';
+            document.getElementById('para-feedback').className = 'paragraph-feedback';
+
+            // Select a random scenario that hasn't been used recently
+            let availableIndices = [];
+            for (let i = 0; i < medicalScenarios.length; i++) {
+                if (!usedScenarioIndices.includes(i)) {
+                    availableIndices.push(i);
+                }
+            }
+
+            // If all scenarios used, reset the tracking
+            if (availableIndices.length === 0) {
+                usedScenarioIndices = [];
+                availableIndices = medicalScenarios.map((_, i) => i);
+            }
+
+            // Pick a random available scenario
+            const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            usedScenarioIndices.push(randomIndex);
+            const scenario = medicalScenarios[randomIndex];
+
+            // Set up the words for this scenario
+            selectedWords = scenario.words.map(word => ({ english: word }));
+
+            // Initialize blanks
+            currentBlanks = scenario.words.map(word => ({
+                word: word,
+                filled: false
+            }));
+
+            // Build paragraph HTML with blanks
+            let paragraphHTML = scenario.template;
+            for (let i = 0; i < 3; i++) {
+                paragraphHTML = paragraphHTML.replace(
+                    `{${i}}`,
+                    `<span class="blank ${i === 0 ? 'active' : ''}" data-index="${i}" id="blank-${i}">____</span>`
+                );
+            }
+
+            document.getElementById('paragraph-text').innerHTML = paragraphHTML;
+
+            // Create word choice buttons (shuffled order)
+            const shuffledChoices = shuffleArray([...scenario.words]);
+            const choicesHTML = shuffledChoices.map(word =>
+                `<button class="word-btn" onclick="selectWord('${word}', this)">${word}</button>`
+            ).join('');
+
+            document.getElementById('word-choices').innerHTML = choicesHTML;
+        }
+
+        function selectWord(word, buttonElement) {
+            const currentBlank = currentBlanks[currentBlankIndex];
+            const blankElement = document.getElementById(`blank-${currentBlankIndex}`);
+
+            if (word === currentBlank.word) {
+                // Correct answer
+                currentBlank.filled = true;
+                blankElement.textContent = word;
+                blankElement.classList.remove('active', 'wrong');
+                blankElement.classList.add('filled');
+
+                // Mark button as used
+                buttonElement.classList.add('used');
+                buttonElement.disabled = true;
+
+                // Speak the word
+                speakWord(word);
+
+                // Move to next blank
+                currentBlankIndex++;
+
+                if (currentBlankIndex < 3) {
+                    // Highlight next blank
+                    const nextBlank = document.getElementById(`blank-${currentBlankIndex}`);
+                    nextBlank.classList.add('active');
+                } else {
+                    // All blanks filled - success!
+                    paragraphScore++;
+                    document.getElementById('para-score').textContent = paragraphScore;
+
+                    const feedback = document.getElementById('para-feedback');
+                    feedback.textContent = 'Correct! 🎉 Generating next paragraph...';
+                    feedback.className = 'paragraph-feedback success';
+
+                    // Load new paragraph after delay
+                    setTimeout(() => {
+                        loadNewParagraph();
+                    }, 2000);
+                }
+            } else {
+                // Wrong answer - shake animation
+                blankElement.classList.add('wrong');
+                setTimeout(() => {
+                    blankElement.classList.remove('wrong');
+                }, 500);
+            }
         }
     </script>
 </body>
